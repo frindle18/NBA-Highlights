@@ -1,9 +1,23 @@
 from bs4 import BeautifulSoup
 import datetime
+import os
 import praw
 import requests
 import time
 import config
+
+def download_video(video_download_url, file_name):
+    folder = 'highlights'
+    os.makedirs(folder, exist_ok=True) # Create the folder if it doesn't exist
+    file_path = os.path.join(folder, file_name)
+
+    r = requests.get(video_download_url)
+    if r.ok:
+        with open(file_path, 'wb') as f:
+            f.write(r.content)
+        print("Video downloaded successfully!")
+    else:
+        print("Failed to download video.")
 
 reddit = praw.Reddit(username=config.username,
                      password=config.password,
@@ -14,7 +28,7 @@ reddit = praw.Reddit(username=config.username,
 subreddit = reddit.subreddit('nba')
 
 # Time frame
-target_date = datetime.datetime(2024, 5, 26) # May 25, 2024
+target_date = datetime.datetime(2024, 5, 26) # May 26, 2024
 start_time = datetime.datetime(target_date.year, target_date.month, target_date.day, 6, 0, 0) # 6am
 end_time = datetime.datetime(target_date.year, target_date.month, target_date.day, 9, 0, 0) # 9am
 
@@ -22,7 +36,7 @@ end_time = datetime.datetime(target_date.year, target_date.month, target_date.da
 
 search_query = 'url:streamable.com AND title:"[Highlight]"'
 
-for highlight in subreddit.search(search_query, sort='new', syntax='lucene'):
+for index, highlight in enumerate(subreddit.search(search_query, sort='new', syntax='lucene')):
     submission_time = datetime.datetime.fromtimestamp(highlight.created_utc)
     if start_time <= submission_time <= end_time:
         print(highlight.title.replace('[Highlight] ', ''))
@@ -37,7 +51,7 @@ for highlight in subreddit.search(search_query, sort='new', syntax='lucene'):
                 if r.ok:
                     print("Request successful.")
 
-                break  # Exit loop if successful
+                break # Exit loop if successful
             except:
                 time.sleep(retry_delay)
         else:
@@ -49,3 +63,5 @@ for highlight in subreddit.search(search_query, sort='new', syntax='lucene'):
         video_download_url = soup.find("meta", property="og:video:url")['content']
 
         print(video_download_url)
+
+        download_video(video_download_url, str(index) + '.mp4')

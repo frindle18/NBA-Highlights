@@ -1,0 +1,12 @@
+beautifulsoup4==4.12.3
+certifi==2024.2.2
+charset-normalizer==3.3.2
+idna==3.7
+praw==7.7.1
+prawcore==2.4.0
+regex==2024.5.15
+requests==2.32.2
+soupsieve==2.5
+update-checker==0.18.0
+urllib3==2.2.1
+websocket-client==1.8.0
