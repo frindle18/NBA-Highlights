@@ -1,5 +1,8 @@
+from bs4 import BeautifulSoup
 import datetime
 import praw
+import requests
+import time
 import config
 
 reddit = praw.Reddit(username=config.username,
@@ -22,6 +25,27 @@ search_query = 'url:streamable.com AND title:"[Highlight]"'
 for highlight in subreddit.search(search_query, sort='new', syntax='lucene'):
     submission_time = datetime.datetime.fromtimestamp(highlight.created_utc)
     if start_time <= submission_time <= end_time:
-        print(highlight.title)
+        print(highlight.title.replace('[Highlight] ', ''))
         print(highlight.url)
-        print()
+       
+        max_retries = 20
+        retry_delay = 2  # in seconds
+
+        for retry in range(max_retries): # Backoff strategy
+            try:
+                r = requests.get(highlight.url)
+                if r.ok:
+                    print("Request successful.")
+
+                break  # Exit loop if successful
+            except:
+                time.sleep(retry_delay)
+        else:
+            print("Maximum retries exceeded. Unable to establish connection.")
+            continue
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        video_download_url = soup.find("meta", property="og:video:url")['content']
+
+        print(video_download_url)
